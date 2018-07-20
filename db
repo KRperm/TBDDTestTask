@@ -1,0 +1,12 @@
+CREATE TABLE "User" (
+    "UserId" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "UserName" TEXT NOT NULL,
+    "UserPassword" TEXT NOT NULL
+);
+CREATE TABLE sqlite_sequence(name,seq);
+CREATE TABLE "message" (
+    "MessageId" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "MessageTime" INTEGER NOT NULL,
+    "MessageAuthor" INTEGER NOT NULL,
+    "MessageContent" TEXT NOT NULL
+);
