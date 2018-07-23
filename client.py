@@ -3,11 +3,14 @@ import socket
 import select
 import re
 import json
+import datetime
 
 class Client:
 	def __init__(self, recvBuffer = 4096, ipAddr = "127.0.0.1", port = 50000):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.settimeout(2)
+
+		self.messageBuffer = ""
 
 		self.recvBuffer = recvBuffer
 
@@ -27,6 +30,7 @@ class Client:
 /auth - Авторизируйтесь
 /enter - Войти в чат-комнату
 /quit - Выйти из чат-комнаты
+/history - Просмотр истории сообщений
 /disconn - Отключится от сервера и выйти из программы
 -----\n"""
 
@@ -73,8 +77,38 @@ class Client:
 			self.sendMessage("Q")
 		elif(message == "/disconn"):
 			self.sendMessage("D")
+		elif(message == "/history"):
+			print("В каком временном периоде искать сообщения?")
+			date = self.enterFromTimeAndToTime();
+			if(date):
+				self.sendMessage("H " + date)
 		else:
 			self.sendMessage("M " + message)
+
+	def enterFromTimeAndToTime(self):
+		timeFrom = self.enterDate("С какой даты нужно искать сообщения?")
+		if(not timeFrom):
+			print("Ввод данных отменен")
+			return None
+		timeTo = self.enterDate("До какой даты нужно искать сообщения?")
+		if(not timeTo):
+			print("Ввод данных отменен")
+			return None
+		return "{} {}".format(int(timeFrom.timestamp()), int(timeTo.timestamp()))
+
+	def enterDate(self, lable):
+		while True:
+			print(lable)
+			print("Введите дату в формате 'гггг-мм-дд чч:мм:cc'")
+			print("введите /quit чтобы отменить ввод")
+			inputData = input()
+			if(inputData == "/quit"):
+				return None
+			try:
+				date = datetime.datetime.strptime(inputData, "%Y-%m-%d %H:%M:%S")
+				return date
+			except:
+				print("Ошибка. неверно введена дата")
 
 	def enterData(self, lable):
 		while True:

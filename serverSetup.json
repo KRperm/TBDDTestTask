@@ -1,6 +1,4 @@
 {
-	"buffer": 4096,
-	"ip":"",
-	"port":50000,
-	"servername": "GoodBoy"
+	"port": 54321,
+	"servername": "Server"
 }

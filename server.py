@@ -9,6 +9,8 @@ class Database:
 	def __init__(self, dbName):
 		self.connection = sqlite3.connect(dbName)
 		self.cursor = self.connection.cursor()
+		self.cursor.executescript('CREATE TABLE IF NOT EXISTS "User" ("UserId" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"UserName" TEXT NOT NULL,"UserPassword" TEXT NOT NULL);CREATE TABLE IF NOT EXISTS "message" ("MessageId" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"MessageTime" INTEGER NOT NULL,"MessageAuthor" INTEGER NOT NULL,"MessageContent" TEXT NOT NULL);')
+		self.connection.commit()
 
 	def addUser(self, name, password):
 		self.cursor.execute("INSERT INTO user (UserName, UserPassword) VALUES ('{}', '{}')".format(name, password))
@@ -27,7 +29,7 @@ class Database:
 		self.connection.commit()
 
 	def getMessageFromTime(self, timeFrom, timeTo):
-		self.cursor.execute("SELECT * FROM message WHERE MessageTime >= {} AND MessageTime <= {}".format(timeFrom, timeTo))
+		self.cursor.execute("SELECT * FROM message INNER JOIN user on message.MessageAuthor = user.UserId WHERE MessageTime >= {} AND MessageTime <= {} ORDER BY MessageTime ASC".format(timeFrom, timeTo))
 		return self.cursor.fetchall()
 
 class User:
@@ -170,11 +172,18 @@ class ChatServer:
 				sender.sock.close()
 				self.userList.remove(sender)
 			#######
-			elif (data[0] == "H"):
+			elif (data[0] == "H"): #History
 				if len(args) != 2:
 					self.sendMessage("Недостаточно агрументов. Ожидаю 2", sender, self.serverAccount)
 				elif sender.isInChatRoom:
-					self.sendMessage("Выйдите из чат-группы, чтобы посмотреть историю сообщений", sender, self.serverAccount)
+					self.sendMessage("Выйдите из чат-грппы, чтобы посмотреть историю сообщений", sender, self.serverAccount)
+				else:
+					hMessages = self.db.getMessageFromTime(args[0], args[1])
+					if len(hMessages) > 0:
+						self.sendMessage("=== Результат запроса ===\n" + self.composeMessages(hMessages) + "=== Конец запроса ===", sender, self.serverAccount)
+					else:
+						self.sendMessage("Сообщений в этот период не найдено", sender, self.serverAccount)
+					
 
 
 	def broadcast(self, message, sender):
@@ -197,6 +206,12 @@ class ChatServer:
 				self.broadcast("Соединение с {} было разорвано.".format(discUser.name), self.serverAccount);
 			sendto.sock.close()
 			self.userList.remove(discUser)
+
+	def composeMessages(self, rawData):
+		result = ""
+		for row in rawData:
+			result += "[{}] {}: {}\n".format(datetime.datetime.fromtimestamp(row[1]), row[5], row[3])
+		return result
 
 setup = None
 try:
