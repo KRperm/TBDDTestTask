@@ -1,4 +1,5 @@
 {
-	"port": 54321,
-	"servername": "Server"
+	"port": 50000,
+	"servername": "Server",
+	"buffer": 3024
 }
